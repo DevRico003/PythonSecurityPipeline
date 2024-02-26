@@ -33,7 +33,7 @@ driver = webdriver.Remote(command_executor=selenium_server_url, options=chrome_o
 
 
 # Geht zur Login-Seite
-driver.get(f"http://{sys.argv[2]}:10007/login")
+driver.get(f"{sys.argv[2]}/login")
 
 # Registriert einen neuen Benutzer
 register_button = driver.find_element_by_xpath("/html/body/div/div/div/form/center[3]/a")
@@ -52,7 +52,7 @@ password2.send_keys(mypassword)
 password2.send_keys(Keys.RETURN)
 
 # Loggt sich mit dem neuen Benutzer ein
-driver.get(f"http://{sys.argv[2]}:10007/login")
+driver.get(f"{sys.argv[2]}/login")
 username = driver.find_element_by_name("username")
 password = driver.find_element_by_name("password")
 
