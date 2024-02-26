@@ -9,32 +9,31 @@
   vars:
     keyname: techstarter
     instance_type: t2.micro
-    security_group_id: launch-wizard-3 # Stellen Sie sicher, dass dies die Security Group ID ist
+    security_group: launch-wizard-3 # Änderung zurück zu security_group
     image: ami-0faab6bdbac9486fb
     region: eu-central-1
     tag_name: TestServer
 
   tasks:
     - name: Launch instance
-    amazon.aws.ec2_instance:
-      key_name: "{{ keyname }}"
-      security_groups: # Änderung zu security_groups
-        - "{{ security_group }}"
-      instance_type: "{{ instance_type }}"
-      image_id: "{{ image }}"
-      wait: true
-      region: "{{ region }}"
-      vpc_subnet_id: subnet-0a51d5eda094edc02
-      network:
-        assign_public_ip: yes
-      tags: # Anpassung der Tags Syntax
-        Name: "{{ tag_name }}"
-    register: ec2
-
+      amazon.aws.ec2_instance: # Achten Sie auf die korrekte Einrückung hier
+        key_name: "{{ keyname }}"
+        security_groups: 
+          - "{{ security_group }}"
+        instance_type: "{{ instance_type }}"
+        image_id: "{{ image }}"
+        wait: true
+        region: "{{ region }}"
+        vpc_subnet_id: subnet-0a51d5eda094edc02
+        network:
+          assign_public_ip: yes
+        tags: 
+          Name: "{{ tag_name }}"
+      register: ec2
 
     - name: Add new instance to hosts group for test
       lineinfile:
-        path: "~/ansible_hosts"
+        path: "/var/jenkins_home/ansible_hosts" # Pfad korrigiert
         regexp: "{{ item.public_ip }}"
         insertafter: "[tstlaunched]"
         line: "{{ item.public_ip }}"
