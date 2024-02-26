@@ -1,29 +1,30 @@
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-import json
 import subprocess
 import sys
 import random
 import string
 
-def randomString(stringLength):
+def randomString(stringLength=10):
     letters = string.ascii_letters
     return ''.join(random.choice(letters) for i in range(stringLength))
 
 def bash_command(cmd):
     subprocess.Popen(cmd, shell=True, executable='/bin/bash')
 
+chrome_options = Options()
+
 myusername = randomString(8)
 mypassword = randomString(12)
 
 if len(sys.argv) < 4:
-    print '1. Provide the ip address for selenium remote server!'
-    print '2. Provide the ip address for target DAST scan!'
-    print '3. Provide the output location of html report!'
+    print('1. Provide the ip address for selenium remote server!')
+    print('2. Provide the ip address for target DAST scan!')
+    print('3. Provide the output location of html report!')
     sys.exit(1)
 
-driver = webdriver.Remote("http://"+sys.argv[1]+":4444/wd/hub", DesiredCapabilities.CHROME)
+driver = webdriver.Remote("http://"+sys.argv[1]+":4444/wd/hub", capabilities)
 
 driver.get("http://"+sys.argv[2]+":10007/login")
 
