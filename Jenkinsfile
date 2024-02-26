@@ -100,29 +100,21 @@ pipeline {
           }
       }
       stage('DAST') {
-          steps {
-		script{				
-			//Test the web application from its frontend
-			/*
-			def exists = fileExists '/var/jenkins_home/nikto-master/program/nikto.pl'
-			if(exists){
-				echo 'nikto already exists'
-			}else{
-			      sh """
-				wget https://github.com/sullo/nikto/archive/master.zip
-				unzip master.zip -d ~/ || true
-				rm master.zip
-			      """
-			}
-			*/
-			def seleniumIp = env.SeleniumPrivateIp
-			if("${testenv}" != "null"){
-				sh "python ~/authDAST.py $seleniumIp ${testenv} $WORKSPACE/$BUILD_TAG/DAST_results.html"
-				//sh "perl /var/jenkins_home/nikto-master/program/nikto.pl -h http://${testenv}:10007/login"
-			}  			
-		}
-	   }
-      }
+    steps {
+        script {                
+            // Stellen Sie sicher, dass die Variable 'seleniumIp' korrekt gesetzt ist
+            def seleniumIp = 'http://3.71.166.230/latest/meta-data/local-ipv4'
+            // Verwenden Sie 'testenv' für die Ziel-IP oder URL
+            def targetUrl = "http://${testenv}:10007"
+            // Definieren Sie den Pfad, an dem der Bericht gespeichert werden soll
+            def reportPath = "$WORKSPACE/$BUILD_TAG/DAST_results.html"
+
+            // Übergeben Sie die notwendigen Argumente an das Python-Skript
+            sh "python3 ~/authDAST.py ${seleniumIp} ${targetUrl} ${reportPath}"
+        }
+    }
+}
+
       stage('System security audit') {
           steps {
               echo 'Run lynis audit on host and fetch result'
@@ -139,15 +131,15 @@ pipeline {
     post {
         always {
 		echo 'We could bring down the ec2 here'
-		/*
+		
 		echo 'Tear down activity'
 		script{
-			if("${testenv}" != "null"){
-				echo "killing host ${testenv}"
-				sh 'ansible-playbook -i ~/ansible_hosts ~/killec2.yml'
-			} 
+			// if("${testenv}" != "null"){
+			// 	echo "killing host ${testenv}"
+			// 	sh 'ansible-playbook -i ~/ansible_hosts ~/killec2.yml'
+			// } 
 		}
-		*/
+		
         }
     }	
 }
