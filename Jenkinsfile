@@ -131,15 +131,15 @@ pipeline {
     post {
         always {
 		echo 'We could bring down the ec2 here'
-		
+		/*
 		echo 'Tear down activity'
 		script{
-			// if("${testenv}" != "null"){
-			// 	echo "killing host ${testenv}"
-			// 	sh 'ansible-playbook -i ~/ansible_hosts ~/killec2.yml'
-			// } 
+			if("${testenv}" != "null"){
+				echo "killing host ${testenv}"
+				sh 'ansible-playbook -i ~/ansible_hosts ~/killec2.yml'
+			} 
 		}
-		
+		*/
         }
     }	
 }
