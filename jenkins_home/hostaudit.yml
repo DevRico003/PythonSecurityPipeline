@@ -3,6 +3,9 @@
   hosts: tstlaunched
   remote_user: ubuntu
   gather_facts: False
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_ssh_private_key_file: ~/.ssh/techstarter.pem
   tasks:
    - name: Get the lynis installer
      get_url: 
