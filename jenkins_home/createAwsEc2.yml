@@ -32,14 +32,20 @@
           Name: "{{ tag_name }}"
       register: ec2
 
+    - name: Debug EC2 instance creation result
+      debug:
+        var: ec2
+
+
     - name: Add new instance to hosts group for test
       lineinfile:
-        path: "/var/jenkins_home/ansible_hosts" # Pfad korrigiert
-        regexp: "{{ item.public_ip }}"
+        path: "~/ansible_hosts"
+        regexp: "{{ item.public_ip_address }}"
         insertafter: "[tstlaunched]"
-        line: "{{ item.public_ip }}"
+        line: "{{ item.public_ip_address }}"
         state: present
       loop: "{{ ec2.instances }}"
+
 
     - name: Wait for SSH to come up
       wait_for:
