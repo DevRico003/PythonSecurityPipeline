@@ -5,29 +5,29 @@
   connection: local
   gather_facts: False
   vars:
-    keyname: psp_ansible_key
+    keyname: techstarter
     instance_type: t2.micro
-    security_group: launch-wizard-1
-    image: ami-0be057a22c63962cb
-    region: eu-west-2
+    security_group: launch-wizard-3
+    image: ami-0faab6bdbac9486fb
+    region: eu-central-1
     tagname: Name=TestServer
 
   tasks:
-    - name: Upload public key to AWS
-      ec2_key:
-         name: "{{ keyname }}"
-         key_material: "{{ lookup('file', '~/.ssh/{{ keyname }}.pub') }}"
-         region: "{{ region }}"
+    # - name: Upload public key to AWS
+    #   ec2_key:
+    #      name: "{{ keyname }}"
+    #      key_material: "{{ lookup('file', '~/.ssh/{{ keyname }}.pub') }}"
+    #      region: "{{ region }}"
 
     - name: Launch instance
-      ec2:
+      community.aws.ec2:
          key_name: "{{ keyname }}"
          group: "{{ security_group }}"
          instance_type: "{{ instance_type }}"
          image: "{{ image }}"
          wait: true
          region: "{{ region }}"
-         vpc_subnet_id: subnet-02a17e56e6827124a
+         vpc_subnet_id: subnet-0a51d5eda094edc02
          assign_public_ip: yes
          instance_tags: "{{tagname}}"
       register: ec2
