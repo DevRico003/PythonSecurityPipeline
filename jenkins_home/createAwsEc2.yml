@@ -20,7 +20,7 @@
     #      region: "{{ region }}"
 
     - name: Launch instance
-      community.aws.ec2:
+      amazon.aws.ec2_instance:
          key_name: "{{ keyname }}"
          group: "{{ security_group }}"
          instance_type: "{{ instance_type }}"
