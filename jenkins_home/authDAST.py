@@ -15,6 +15,11 @@ def bash_command(cmd):
 
 chrome_options = Options()
 
+# Erstellen Sie die DesiredCapabilities
+capabilities = webdriver.DesiredCapabilities.CHROME.copy()
+# Fügen Sie die ChromeOptions zur Capabilities hinzu
+capabilities.update(chrome_options.to_capabilities())
+
 myusername = randomString(8)
 mypassword = randomString(12)
 
