@@ -40,16 +40,20 @@
     - name: Add new instance to hosts group for test
       lineinfile:
         path: "~/ansible_hosts"
-        regexp: "{{ item.public_ip_address }}"
+        regexp: "{{ item.network_interfaces[0].association.public_ip }}"
         insertafter: "[tstlaunched]"
-        line: "{{ item.public_ip_address }}"
+        line: "{{ item.network_interfaces[0].association.public_ip }}"
         state: present
       loop: "{{ ec2.instances }}"
-
+      loop_control:
+        label: "{{ item.instance_id }}"
 
     - name: Wait for SSH to come up
       wait_for:
-        host: "{{ item.public_ip }}"
+        host: "{{ item.network_interfaces[0].association.public_ip }}"
         port: 22
         state: started
       loop: "{{ ec2.instances }}"
+      loop_control:
+        label: "{{ item.instance_id }}"
+
