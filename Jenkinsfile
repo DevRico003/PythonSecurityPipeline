@@ -1,77 +1,145 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.keys import Keys
-import subprocess
-import sys
-import random
-import string
-from selenium.webdriver.common.by import By
+/*
+This pipeline will carry out the following on the project:
 
+1. Git secret checker
+2. Software Composition Analysis
+3. Static Application Security Testing
+4. Container security audit 
+5. Dynamic Application Security Testing
+6. Host system security audit
+7. Host application protection
 
-def randomString(stringLength=10):
-    """Generiert einen zufälligen String der angegebenen Länge."""
-    letters = string.ascii_letters
-    return ''.join(random.choice(letters) for i in range(stringLength))
+*/
 
-def bash_command(cmd):
-    """Führt den angegebenen Bash-Befehl aus."""
-    subprocess.Popen(cmd, shell=True, executable='/bin/bash')
+testenv = "null"
 
-chrome_options = Options()
-chrome_options.add_argument("--headless")  # Fügt das Argument hinzu, um den Browser im Hintergrund auszuführen
+pipeline {
+    /* Which agent are we running this pipeline on? We can configure different OS */
+    agent any
+	
+    stages {   
+      stage('Checkout project'){
+        steps {
+          echo 'downloading git directory..'
+	  git 'https://github.com/DevRico003/secDevLabs'
+        }
+      }      
+      stage('git secret check'){
+        steps{
+	  script{
+		echo 'running trufflehog to check project history for secrets'
+		sh 'trufflehog --regex --entropy=False --max_depth=3 https://github.com/DevRico003/secDevLabs'
+	  }
+        }
+      }
+      stage('SCA'){
+        steps{
+          echo 'running python safety check on requirements.txt file'
+          sh 'safety check -r $WORKSPACE/owasp-top10-2017-apps/a7/gossip-world/app/requirements.txt'
+          /*
+	  echo 'running liccheck on dependencies'
+	  sh """
+              virtualenv --no-site-packages .
+              source bin/activate
+	      pip install -r $WORKSPACE/owasp-top10-2017-apps/a7/gossip-world/app/requirements.txt
+              liccheck -s ~/my_strategy.ini -r $WORKSPACE/owasp-top10-2017-apps/a7/gossip-world/app/requirements.txt
+              deactivate
+            """
+	    */
+        }
+      }  
+      stage('SAST') {
+          steps {
+              echo 'Testing source code for security bugs and vulnerabilities'
+	      sh 'bandit -r $WORKSPACE/owasp-top10-2017-apps/a7/gossip-world/app/ -ll || true'
+          }
+      }
+      stage('Container audit') {
+          steps {
+              echo 'Audit the dockerfile used to spin up the web application'
+		script{				
+			def exists = fileExists '/var/jenkins_home/lynis/lynis'
+			if(exists){
+				echo 'lynis already exists'
+			}else{
+			      sh """
+			      wget https://downloads.cisofy.com/lynis/lynis-2.7.5.tar.gz
+			      tar xfvz lynis-2.7.5.tar.gz -C ~/
+			      rm lynis-2.7.5.tar.gz
+			      """
+			}
+		}
+		  dir("/var/jenkins_home/lynis"){  
+			sh """
+			mkdir $WORKSPACE/$BUILD_TAG/
+			./lynis audit dockerfile $WORKSPACE/owasp-top10-2017-apps/a7/gossip-world/deployments/Dockerfile | ansi2html > $WORKSPACE/$BUILD_TAG/docker-report.html
+			mv /tmp/lynis.log $WORKSPACE/$BUILD_TAG/docker_lynis.log
+			mv /tmp/lynis-report.dat $WORKSPACE/$BUILD_TAG/docker_lynis-report.dat
+			"""
+		  }
+          }
+      }	    
+      stage('Setup test env') {
+          steps {
+              sh """
+	      #refresh inventory
+	      echo "[local]" > ~/ansible_hosts
+	      echo "localhost ansible_connection=local" >> ~/ansible_hosts
+	      echo "[tstlaunched]" >> ~/ansible_hosts
+	      
+	      tar cvfz /var/jenkins_home/pythonapp.tar.gz -C $WORKSPACE/owasp-top10-2017-apps/a7/ .
 
-myusername = randomString(8)
-mypassword = randomString(12)
+              ssh-keygen -t rsa -N "" -f ~/.ssh/psp_ansible_key || true
+              ansible-playbook -i ~/ansible_hosts ~/createAwsEc2.yml
+              """		  
+	      script{
+		 testenv = sh(script: "sed -n '/tstlaunched/{n;p;}' /var/jenkins_home/ansible_hosts", returnStdout: true).trim()
+	      }
+	      echo "${testenv}"
+	      sh  'ansible-playbook -i ~/ansible_hosts ~/configureTestEnv.yml'
+          }
+      }
+      stage('DAST') {
+    steps {
+        script {                
+            // Stellen Sie sicher, dass die Variable 'seleniumIp' korrekt gesetzt ist
+            def seleniumIp = 'http://3.71.166.230:4444/wd/hub'
+            // Verwenden Sie 'testenv' für die Ziel-IP oder URL
+            def targetUrl = "http://${testenv}:10007"
+            // Definieren Sie den Pfad, an dem der Bericht gespeichert werden soll
+            def reportPath = "$WORKSPACE/$BUILD_TAG/DAST_results.html"
 
-if len(sys.argv) < 4:
-    print('1. Provide the IP address for selenium remote server!')
-    print('2. Provide the IP address for target DAST scan!')
-    print('3. Provide the output location of html report!')
-    sys.exit(1)
+            // Übergeben Sie die notwendigen Argumente an das Python-Skript
+            sh "python3 ~/authDAST.py ${seleniumIp} ${targetUrl} ${reportPath}"
+        }
+    }
+}
 
-selenium_server_url = "http://3.71.166.230:4444/wd/hub"  # Beispiel-URL, ersetzen Sie dies durch die tatsächliche URL Ihres Selenium Servers
-
-driver = webdriver.Remote(command_executor=selenium_server_url, options=chrome_options)
-
-
-# Geht zur Login-Seite
-driver.get(f"{sys.argv[2]}/login")
-
-# Registriert einen neuen Benutzer
-register_button = driver.find_element(By.XPATH, "/html/body/div/div/div/form/center[3]/a")
-register_button.click()
-
-myusername = randomString(8)
-mypassword = randomString(12)
-
-username = driver.find_element_by_name("username")
-password1 = driver.find_element_by_name("password1")
-password2 = driver.find_element_by_name("password2")
-
-username.send_keys(myusername)
-password1.send_keys(mypassword)
-password2.send_keys(mypassword)
-password2.send_keys(Keys.RETURN)
-
-# Loggt sich mit dem neuen Benutzer ein
-driver.get(f"{sys.argv[2]}/login")
-username = driver.find_element_by_name("username")
-password = driver.find_element_by_name("password")
-
-username.send_keys(myusername)
-password.send_keys(mypassword)
-password.send_keys(Keys.RETURN)
-
-# Extrahiert Cookies für den DAST-Scan
-nikto_string = "STATIC-COOKIE="
-cookies_list = driver.get_cookies()
-for cookie in cookies_list:
-    nikto_string += f"\"{cookie['name']}\"=\"{cookie['value']}\";"
-
-# Fügt den Cookie-String zur Nikto-Konfigurationsdatei hinzu
-bash_command(f"echo '{nikto_string}' > ~/nikto-config.txt")
-
-# Führt den Nikto-Scan durch
-bash_command(f"nikto -ask no -config ~/nikto-config.txt -Format html -h http://{sys.argv[2]}:10007/gossip -output {sys.argv[3]}")
-
-driver.quit()
+      stage('System security audit') {
+          steps {
+              echo 'Run lynis audit on host and fetch result'
+	      sh 'ansible-playbook -i ~/ansible_hosts ~/hostaudit.yml --extra-vars "logfolder=$WORKSPACE/$BUILD_TAG/"'
+          }
+      }
+      stage('Deploy WAF') {
+          steps {
+              echo 'Deploy modsecurity as reverse proxy'
+	      sh 'ansible-playbook -i ~/ansible_hosts ~/configureWAF.yml'
+	  }
+      }	    
+    }
+    post {
+        always {
+		echo 'We could bring down the ec2 here'
+		/*
+		echo 'Tear down activity'
+		script{
+			if("${testenv}" != "null"){
+				echo "killing host ${testenv}"
+				sh 'ansible-playbook -i ~/ansible_hosts ~/killec2.yml'
+			} 
+		}
+		*/
+        }
+    }	
+}
