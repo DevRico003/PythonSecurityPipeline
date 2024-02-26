@@ -5,6 +5,8 @@ import subprocess
 import sys
 import random
 import string
+from selenium.webdriver.common.by import By
+
 
 def randomString(stringLength=10):
     """Generiert einen zufälligen String der angegebenen Länge."""
@@ -36,7 +38,7 @@ driver = webdriver.Remote(command_executor=selenium_server_url, options=chrome_o
 driver.get(f"{sys.argv[2]}/login")
 
 # Registriert einen neuen Benutzer
-register_button = driver.find_element_by_xpath("/html/body/div/div/div/form/center[3]/a")
+register_button = driver.find_element(By.XPATH, "/html/body/div/div/div/form/center[3]/a")
 register_button.click()
 
 myusername = randomString(8)
