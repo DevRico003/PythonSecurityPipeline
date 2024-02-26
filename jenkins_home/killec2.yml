@@ -3,7 +3,7 @@
   hosts: tstlaunched
   remote_user: ubuntu
   vars:
-    region: "eu-west-2"
+    region: "eu-central-1"
   tasks:
     - name: get remote instance metadata
       ec2_metadata_facts:
