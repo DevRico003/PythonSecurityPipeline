@@ -16,19 +16,21 @@
 
   tasks:
     - name: Launch instance
-      ec2_instance:
-        key_name: "{{ keyname }}"
-        security_group_ids: # Verwenden Sie security_group_ids für VPCs
-          - "{{ security_group_id }}"
-        instance_type: "{{ instance_type }}"
-        image_id: "{{ image }}" # Stellen Sie sicher, dass Sie image_id anstelle von image verwenden
-        wait: true
-        region: "{{ region }}"
-        vpc_subnet_id: subnet-0a51d5eda094edc02
+    amazon.aws.ec2_instance:
+      key_name: "{{ keyname }}"
+      security_groups: # Änderung zu security_groups
+        - "{{ security_group }}"
+      instance_type: "{{ instance_type }}"
+      image_id: "{{ image }}"
+      wait: true
+      region: "{{ region }}"
+      vpc_subnet_id: subnet-0a51d5eda094edc02
+      network:
         assign_public_ip: yes
-        tags: # Verwenden Sie tags für das Tagging von Instanzen
-          Name: "{{ tag_name }}"
-      register: ec2
+      tags: # Anpassung der Tags Syntax
+        Name: "{{ tag_name }}"
+    register: ec2
+
 
     - name: Add new instance to hosts group for test
       lineinfile:
