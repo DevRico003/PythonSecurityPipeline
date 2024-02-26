@@ -18,22 +18,18 @@ def bash_command(cmd):
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # Fügt das Argument hinzu, um den Browser im Hintergrund auszuführen
 
-myusername = randomString(8)
-mypassword = randomString(12)
-
 if len(sys.argv) < 4:
     print('1. Provide the IP address for selenium remote server!')
     print('2. Provide the IP address for target DAST scan!')
     print('3. Provide the output location of html report!')
     sys.exit(1)
 
-selenium_server_url = "http://3.71.166.230:4444/wd/hub"  # Beispiel-URL, ersetzen Sie dies durch die tatsächliche URL Ihres Selenium Servers
+selenium_server_url = sys.argv[1]  # Verwenden Sie den ersten Befehlszeilenargument als Selenium-Server-URL
 
 driver = webdriver.Remote(command_executor=selenium_server_url, options=chrome_options)
 
-
 # Geht zur Login-Seite
-driver.get(f"http://{sys.argv[2]}:10007/login")
+driver.get(f"http://{sys.argv[2]}/login")
 
 # Registriert einen neuen Benutzer
 register_button = driver.find_element_by_xpath("/html/body/div/div/div/form/center[3]/a")
@@ -52,7 +48,7 @@ password2.send_keys(mypassword)
 password2.send_keys(Keys.RETURN)
 
 # Loggt sich mit dem neuen Benutzer ein
-driver.get(f"http://{sys.argv[2]}:10007/login")
+driver.get(f"http://{sys.argv[2]}/login")
 username = driver.find_element_by_name("username")
 password = driver.find_element_by_name("password")
 
@@ -64,12 +60,12 @@ password.send_keys(Keys.RETURN)
 nikto_string = "STATIC-COOKIE="
 cookies_list = driver.get_cookies()
 for cookie in cookies_list:
-    nikto_string += f"\"{cookie['name']}\"=\"{cookie['value']}\";"
+    nikto_string += f"{cookie['name']}={cookie['value']};"
 
 # Fügt den Cookie-String zur Nikto-Konfigurationsdatei hinzu
 bash_command(f"echo '{nikto_string}' > ~/nikto-config.txt")
 
 # Führt den Nikto-Scan durch
-bash_command(f"nikto -ask no -config ~/nikto-config.txt -Format html -h http://{sys.argv[2]}:10007/gossip -output {sys.argv[3]}")
+bash_command(f"nikto -ask no -config ~/nikto-config.txt -Format html -h {sys.argv[2]} -output {sys.argv[3]}")
 
 driver.quit()
