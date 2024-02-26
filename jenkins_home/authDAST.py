@@ -55,8 +55,8 @@ password2.send_keys(Keys.RETURN)
 
 # Loggt sich mit dem neuen Benutzer ein
 driver.get(f"{sys.argv[2]}/login")
-username = driver.find_element_by_name("username")
-password = driver.find_element_by_name("password")
+username = driver.find_element(By.NAME, "username")
+password = driver.find_element(By.NAME, "password")
 
 username.send_keys(myusername)
 password.send_keys(mypassword)
