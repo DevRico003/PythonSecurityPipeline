@@ -4,46 +4,44 @@
   hosts: localhost
   connection: local
   gather_facts: False
+  collections:
+    - amazon.aws
   vars:
     keyname: techstarter
     instance_type: t2.micro
-    security_group: launch-wizard-3
+    security_group_id: launch-wizard-3 # Stellen Sie sicher, dass dies die Security Group ID ist
     image: ami-0faab6bdbac9486fb
     region: eu-central-1
-    tagname: Name=TestServer
+    tag_name: TestServer
 
   tasks:
-    # - name: Upload public key to AWS
-    #   ec2_key:
-    #      name: "{{ keyname }}"
-    #      key_material: "{{ lookup('file', '~/.ssh/{{ keyname }}.pub') }}"
-    #      region: "{{ region }}"
-
     - name: Launch instance
-      amazon.aws.ec2_instance:
-         key_name: "{{ keyname }}"
-         group: "{{ security_group }}"
-         instance_type: "{{ instance_type }}"
-         image: "{{ image }}"
-         wait: true
-         region: "{{ region }}"
-         vpc_subnet_id: subnet-0a51d5eda094edc02
-         assign_public_ip: yes
-         instance_tags: "{{tagname}}"
+      ec2_instance:
+        key_name: "{{ keyname }}"
+        security_group_ids: # Verwenden Sie security_group_ids für VPCs
+          - "{{ security_group_id }}"
+        instance_type: "{{ instance_type }}"
+        image_id: "{{ image }}" # Stellen Sie sicher, dass Sie image_id anstelle von image verwenden
+        wait: true
+        region: "{{ region }}"
+        vpc_subnet_id: subnet-0a51d5eda094edc02
+        assign_public_ip: yes
+        tags: # Verwenden Sie tags für das Tagging von Instanzen
+          Name: "{{ tag_name }}"
       register: ec2
 
     - name: Add new instance to hosts group for test
-      local_action: lineinfile
-                    dest="~/ansible_hosts"
-                    regexp={{ item.private_ip }}
-                    insertafter="[tstlaunched]"
-                    line="{{ item.private_ip }}"
-                    state=present
-      with_items: "{{ ec2.instances }}"
+      lineinfile:
+        path: "~/ansible_hosts"
+        regexp: "{{ item.public_ip }}"
+        insertafter: "[tstlaunched]"
+        line: "{{ item.public_ip }}"
+        state: present
+      loop: "{{ ec2.instances }}"
 
     - name: Wait for SSH to come up
-      local_action: wait_for
-                    host={{ item.private_ip }}
-                    port=22
-                    state=started
-      with_items: "{{ ec2.instances }}"                    
+      wait_for:
+        host: "{{ item.public_ip }}"
+        port: 22
+        state: started
+      loop: "{{ ec2.instances }}"
