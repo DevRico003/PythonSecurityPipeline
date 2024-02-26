@@ -1,7 +1,7 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.chrome.options import Options
 import subprocess
 import sys
 import random
@@ -13,25 +13,29 @@ def randomString(stringLength=10):
     return ''.join(random.choice(letters) for i in range(stringLength))
 
 def bash_command(cmd):
-    """Führt einen Bash-Befehl aus."""
+    """Führt den angegebenen Bash-Befehl aus."""
     subprocess.Popen(cmd, shell=True, executable='/bin/bash')
 
+chrome_options = Options()
+
+# Erstellen Sie die DesiredCapabilities
+capabilities = DesiredCapabilities.CHROME.copy()
+# Fügen Sie die ChromeOptions zur Capabilities hinzu
+capabilities.update(chrome_options.to_capabilities())
+
+myusername = randomString(8)
+mypassword = randomString(12)
+
 if len(sys.argv) < 4:
-    print('1. Geben Sie die IP-Adresse des Selenium Remote-Servers an!')
-    print('2. Geben Sie die IP-Adresse für den Ziel-DAST-Scan an!')
-    print('3. Geben Sie den Speicherort der HTML-Ausgabedatei an!')
+    print('1. Provide the IP address for selenium remote server!')
+    print('2. Provide the IP address for target DAST scan!')
+    print('3. Provide the output location of html report!')
     sys.exit(1)
 
-# Konfigurieren Sie Chrome-Optionen nach Bedarf
-chrome_options = Options()
-# Beispiel: Führen Sie Chrome im Headless-Modus aus
-chrome_options.add_argument("--headless")
+# Stellen Sie sicher, dass die URL korrekt ist
+selenium_server_url = "http://3.71.166.230:4444/wd/hub"
 
-# Erstellen des WebDriver-Objekts mit Remote-Optionen
-driver = webdriver.Remote(
-    command_executor="http://3.71.166.230:4444/wd/hub",
-    desired_capabilities=DesiredCapabilities.CHROME
-)
+driver = webdriver.Remote(command_executor=selenium_server_url, desired_capabilities=capabilities)
 
 
 # Geht zur Login-Seite
