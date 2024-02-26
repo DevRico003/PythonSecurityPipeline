@@ -21,14 +21,14 @@ pipeline {
       stage('Checkout project'){
         steps {
           echo 'downloading git directory..'
-	  git 'https://github.com/pawnu/secDevLabs.git'
+	  git 'https://github.com/DevRico003/secDevLabs'
         }
       }      
       stage('git secret check'){
         steps{
 	  script{
 		echo 'running trufflehog to check project history for secrets'
-		sh 'trufflehog --regex --entropy=False --max_depth=3 https://github.com/pawnu/secDevLabs'
+		sh 'trufflehog --regex --entropy=False --max_depth=3 https://github.com/DevRico003/secDevLabs'
 	  }
         }
       }
