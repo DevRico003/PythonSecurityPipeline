@@ -4,26 +4,36 @@
   become: True
   remote_user: ubuntu
   gather_facts: True
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
   tasks:
    - name: update package manager
      apt: update_cache=yes
+
    - name: Install docker
      apt: name=docker.io state=present
+
    - name: Install docker-compose
      apt: name=docker-compose update_cache=yes state=present
+
    - name: Install kbtin for lynis to produce html report
      apt: name=kbtin state=present
+
    - name: Install make to build the pythonapp
-     apt: name=make state=present     
+     apt: name=make state=present  
+
    - name: Copy the zip file of project
      copy: 
        src: pythonapp.tar.gz 
        dest: /home/ubuntu/pythonapp.tar.gz
+
    - name: Unzip it
      unarchive: 
        src: /home/ubuntu/pythonapp.tar.gz
        dest: /home/ubuntu/
        copy: no
+       
    - name: Run the application with docker
      shell: make install
      args:
