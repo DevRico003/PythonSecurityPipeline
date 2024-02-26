@@ -13,6 +13,7 @@
     image: ami-0faab6bdbac9486fb
     region: eu-central-1
     tag_name: TestServer
+    ansible_python_interpreter: "/opt/venv/bin/python3.11"
 
   tasks:
     - name: Launch instance
