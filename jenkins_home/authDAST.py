@@ -28,9 +28,10 @@ chrome_options.add_argument("--headless")
 
 # Erstellen des WebDriver-Objekts mit Remote-Optionen
 driver = webdriver.Remote(
-    command_executor=f"http://{sys.argv[1]}:4444/wd/hub",
-    options=chrome_options
+    command_executor="http://3.71.166.230:4444/wd/hub",
+    desired_capabilities=DesiredCapabilities.CHROME
 )
+
 
 # Geht zur Login-Seite
 driver.get(f"http://{sys.argv[2]}:10007/login")
