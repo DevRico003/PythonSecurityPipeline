@@ -1,56 +1,55 @@
 FROM jenkins/jenkins:lts
-MAINTAINER pawan uppadey <pawan.uppadey@gmail.com>
 
-#Install Jenkins plugin to make this pipeline work
+# Copy plugins.txt
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
-RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
 
-#Copy script to auto create user to jenkins init folder
+# Install Jenkins plugins
+RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
+
+# Copy script to auto create user to Jenkins init folder
 COPY setupJenkins.groovy /usr/share/jenkins/ref/init.groovy.d/
 
-#setup the docker container for scanners
+# Setup the docker container for scanners
 USER root
 RUN apt-get update && apt-get install -y \
-	python-pip \
-	curl \
-	maven \
-	git \
-	perl \
-	wget \
-	kbtin \
-	libnet-ssleay-perl \
-	software-properties-common
+    python3-pip \
+    python3-venv \
+    curl \
+    maven \
+    git \
+    perl \
+    wget \
+    kbtin \
+    libnet-ssleay-perl \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
 
-#add public key for the multiverse repo which has nikto
+# Add public key for the multiverse repo which has nikto
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
 RUN add-apt-repository 'deb http://archive.ubuntu.com/ubuntu bionic multiverse'
 RUN add-apt-repository 'deb http://archive.ubuntu.com/ubuntu bionic-security multiverse'
 RUN add-apt-repository 'deb http://archive.ubuntu.com/ubuntu bionic-updates multiverse'
 
-RUN apt-get update -y
-RUN apt-get install -y nikto	
-	
-#Install virtualenv to isolate each project dependencies
-RUN pip install virtualenv
-#Install python SCA tool/dependency checker, license check
-RUN pip install safety
-RUN pip install liccheck
-#Install the git history checker for secrets
-RUN pip install trufflehog
-#Install python SAST tool
-RUN pip install bandit
+RUN apt-get update -y && apt-get install -y nikto
 
-# Used for authenticated DAST scan
-RUN pip install selenium
+# Create a virtual environment to avoid conflicts with the system Python packages
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-#install the orchestration tool, boto for ec2 module, some lib upgrade under requests
-RUN pip install ansible
-RUN pip install boto 
-RUN pip install boto3
+# Install various Python tools within the virtual environment
+RUN pip3 install --upgrade pip && \
+    pip3 install virtualenv safety liccheck trufflehog bandit selenium ansible boto boto3 --no-cache-dir
 
-# configure ansible to use right keys and not check host auth for this ephemeral/temp aws host
-# Not authenticating existing/long-term hosts requiring relogins may lead to mitm.. be careful
+RUN ansible-galaxy collection install amazon.aws
+
+RUN export AWS_ACCESS_KEY_ID="xxxxxx" \
+    export AWS_SECRET_ACCESS_KEY="xxxxxx" \
+    export AWS_SESSION_TOKEN="xxxxxx"
+
+# Configure Ansible to use right keys and not check host auth for this ephemeral/temp AWS host
 COPY ansible.cfg /etc/ansible/ansible.cfg
 
-# drop back to the regular jenkins user - good practice
+COPY ~/.ssh/techstarter.pem ~/.ssh/techstarter.pem
+
+# Drop back to the regular Jenkins user - good practice
 USER jenkins
