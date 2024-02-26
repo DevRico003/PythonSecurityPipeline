@@ -103,7 +103,7 @@ pipeline {
     steps {
         script {                
             // Stellen Sie sicher, dass die Variable 'seleniumIp' korrekt gesetzt ist
-            def seleniumIp = 'http://3.71.166.230/latest/meta-data/local-ipv4'
+            def seleniumIp = 'http://3.71.166.230:4444/wd/hub'
             // Verwenden Sie 'testenv' für die Ziel-IP oder URL
             def targetUrl = "http://${testenv}:10007"
             // Definieren Sie den Pfad, an dem der Bericht gespeichert werden soll
