@@ -1,7 +1,6 @@
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
 import subprocess
 import sys
 import random
@@ -17,11 +16,7 @@ def bash_command(cmd):
     subprocess.Popen(cmd, shell=True, executable='/bin/bash')
 
 chrome_options = Options()
-
-# Erstellen Sie die DesiredCapabilities
-capabilities = DesiredCapabilities.CHROME.copy()
-# Fügen Sie die ChromeOptions zur Capabilities hinzu
-capabilities.update(chrome_options.to_capabilities())
+chrome_options.add_argument("--headless")  # Fügt das Argument hinzu, um den Browser im Hintergrund auszuführen
 
 myusername = randomString(8)
 mypassword = randomString(12)
@@ -32,10 +27,9 @@ if len(sys.argv) < 4:
     print('3. Provide the output location of html report!')
     sys.exit(1)
 
-# Stellen Sie sicher, dass die URL korrekt ist
-selenium_server_url = "http://3.71.166.230:4444/wd/hub"
+selenium_server_url = "http://3.71.166.230:4444/wd/hub"  # Beispiel-URL, ersetzen Sie dies durch die tatsächliche URL Ihres Selenium Servers
 
-driver = webdriver.Remote(command_executor=selenium_server_url, desired_capabilities=capabilities)
+driver = webdriver.Remote(command_executor=selenium_server_url, options=chrome_options)
 
 
 # Geht zur Login-Seite
