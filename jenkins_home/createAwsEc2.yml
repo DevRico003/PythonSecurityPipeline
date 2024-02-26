@@ -36,7 +36,6 @@
       debug:
         var: ec2
 
-
     - name: Add new instance to hosts group for test
       lineinfile:
         path: "~/ansible_hosts"
