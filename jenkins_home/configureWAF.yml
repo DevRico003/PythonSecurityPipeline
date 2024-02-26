@@ -4,11 +4,14 @@
   become: True
   remote_user: ubuntu
   gather_facts: True
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_ssh_private_key_file: ~/.ssh/techstarter.pem
   tasks:    
     - name: Run the WAF on docker
       docker_container:
         name: modsecurity_waf
-        image: owasp/modsecurity-crs
+        image: owasp/modsecurity-crs:3.3.5-nginx-202402140602
         state: started
         restart_policy: always
         ports:
