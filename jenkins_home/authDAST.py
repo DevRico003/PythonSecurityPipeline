@@ -44,9 +44,9 @@ register_button.click()
 myusername = randomString(8)
 mypassword = randomString(12)
 
-username = driver.find_element_by_name("username")
-password1 = driver.find_element_by_name("password1")
-password2 = driver.find_element_by_name("password2")
+username = driver.find_element(By.NAME, "username")
+password1 = driver.find_element(By.NAME, "password1")
+password2 = driver.find_element(By.NAME, "password2")
 
 username.send_keys(myusername)
 password1.send_keys(mypassword)
