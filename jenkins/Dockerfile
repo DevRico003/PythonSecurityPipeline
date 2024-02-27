@@ -42,10 +42,6 @@ RUN pip3 install --upgrade pip && \
 
 RUN ansible-galaxy collection install amazon.aws
 
-RUN export AWS_ACCESS_KEY_ID="xxxxxx" \
-    export AWS_SECRET_ACCESS_KEY="xxxxxx" \
-    export AWS_SESSION_TOKEN="xxxxxx"
-
 # Configure Ansible to use right keys and not check host auth for this ephemeral/temp AWS host
 COPY ansible.cfg /etc/ansible/ansible.cfg
 
